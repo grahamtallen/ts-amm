@@ -46,11 +46,34 @@ export function crossTick(
     zeroForOne: boolean,
     amountIn: number
 ): { amountOut: number, newSqrtPrice: number } {
-    const maxAmountOut = getAmountOutCLMM(L, sqrtPriceCurrent, sqrtPriceNextTick, zeroForOne);
-
-    // console.log({ newPrice, newPriceSqrt: Math.sqrt(newPrice)});
+    // check inputs are correct, price moves in expected direction
+    if (zeroForOne) {
+        if (sqrtPriceCurrent <= sqrtPriceNextTick) {
+            throw new Error('Invalid input');
+        }
+    } else {
+        if (sqrtPriceCurrent >= sqrtPriceNextTick) {
+            throw new Error('Invalid input');
+        }
+    }
+    let amountOut: number = 0;
+    let newSqrtPrice: number = 0;
+    if (zeroForOne) {
+        const amountInToBoundary = L * (sqrtPriceCurrent - sqrtPriceNextTick) / (sqrtPriceCurrent * sqrtPriceNextTick);
+        console.log({ amountInToBoundary })
+        if (amountIn <= amountInToBoundary) {
+            newSqrtPrice = 1 / (1 / sqrtPriceCurrent + amountIn / L);
+            amountOut = L * (sqrtPriceCurrent - newSqrtPrice);
+        }
+    } else {
+        const amountInToBoundary = L * (sqrtPriceNextTick - sqrtPriceCurrent);
+        if (amountIn <= amountInToBoundary) {
+            newSqrtPrice = sqrtPriceCurrent + (amountIn / L);
+            amountOut = L * ((1 / sqrtPriceCurrent) - (1 / newSqrtPrice));
+        }
+    }
     return {
         amountOut,
-        newSqrtPrice: 0,
+        newSqrtPrice,
     }
 }

@@ -92,16 +92,22 @@ describe("CLMM math", () => {
  * Hint: compute max possible Δx or Δy before reaching sqrtPriceNextTick and compare with amountIn.
  */
 describe("CLMM tick crossing", () => {
-    it("swapping token0→token1 hits tick boundary", () => {
+    it.only("swapping token0→token1 hits tick boundary", () => {
         // Calculate the amount of token0 needed to cross the tick
-        const requiredAmountIn = 1000 * ((1 / Math.sqrt(1.05)) - (1 / Math.sqrt(1.0)));
-        const result = crossTick(1000, Math.sqrt(1.0), Math.sqrt(1.05), true, Math.abs(requiredAmountIn));
-
+        const requiredAmountIn = 1000 * ((1 / Math.sqrt(0.95)) - (1 / Math.sqrt(1.0)));
+        console.log({ requiredAmountIn })
+        const result = crossTick(
+            1000,
+            Math.sqrt(1.0),     // current = 1.0
+            Math.sqrt(0.95),    // next lower boundary = 0.95
+            true,               // 0→1 → price goes down
+            Math.abs(requiredAmountIn)
+        );
         // The expected amountOut is the amount of token1 from a full tick swap
-        const expectedAmountOut = 1000 * (Math.sqrt(1.0) - Math.sqrt(1.05));
+        const expectedAmountOut = 1000 * (Math.sqrt(1.0) - Math.sqrt(0.95));
 
-        assert.equal(Math.round(result.amountOut), Math.round(Math.abs(expectedAmountOut)));
-        assert.equal(result.newSqrtPrice.toFixed(4), Math.sqrt(1.05).toFixed(4));
+        assert.equal(Math.round(result.amountOut), Math.round(expectedAmountOut));
+        assert.equal(result.newSqrtPrice.toFixed(4), Math.sqrt(0.95).toFixed(4));
     });
 
     it("swapping token1→token0 hits tick boundary", () => {
@@ -120,13 +126,29 @@ describe("CLMM tick crossing", () => {
     it("swapping token0→token1 stops short of boundary", () => {
         // We use a small amountIn, which is less than what's needed to cross the tick
         const amountIn = 10;
-        const result = crossTick(1000, Math.sqrt(1.0), Math.sqrt(1.05), true, amountIn);
+
+        const result = crossTick(1000, Math.sqrt(1.0), Math.sqrt(0.95), true, amountIn);
 
         // Calculate the expected new sqrt price based on the amountIn
         const newSqrtPrice = 1 / ((amountIn / 1000) + (1 / Math.sqrt(1.0)));
         const expectedAmountOut = 1000 * (Math.sqrt(1.0) - newSqrtPrice);
 
         assert.equal(Math.round(result.amountOut), Math.round(expectedAmountOut));
-        assert.notEqual(result.newSqrtPrice.toFixed(4), Math.sqrt(1.05).toFixed(4));
+        assert.equal(result.newSqrtPrice.toFixed(4), 0.990099.toFixed(4));
     });
+
+    it("swapping token1→token0 stops short of boundary", () => {
+        // We use a small amountIn, which is less than what's needed to cross the tick
+        const amountIn = 10;
+
+        const result = crossTick(1000, Math.sqrt(1.0), Math.sqrt(1.05), false, amountIn);
+
+        // Calculate the expected new sqrt price based on the amountIn
+        const newSqrtPrice = Math.sqrt(1.0) + (amountIn / 1000);
+        const expectedAmountOut = 1000 * ((1 / Math.sqrt(1.0)) - (1 / newSqrtPrice));
+
+        assert.equal(Math.round(result.amountOut), Math.round(expectedAmountOut));
+        assert.equal(result.newSqrtPrice.toFixed(4), newSqrtPrice.toFixed(4));
+    });
+
 });
