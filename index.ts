@@ -60,7 +60,6 @@ export function crossTick(
     let newSqrtPrice: number = 0;
     if (zeroForOne) {
         const amountInToBoundary = L * (sqrtPriceCurrent - sqrtPriceNextTick) / (sqrtPriceCurrent * sqrtPriceNextTick);
-        console.log({ amountInToBoundary })
         if (amountIn <= amountInToBoundary) {
             newSqrtPrice = 1 / (1 / sqrtPriceCurrent + amountIn / L);
             amountOut = L * (sqrtPriceCurrent - newSqrtPrice);
