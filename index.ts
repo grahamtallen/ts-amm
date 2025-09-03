@@ -1,19 +1,10 @@
-export function getAmountOutCPMM(xIn: number, xReserves: number, yReserves: number): number {
-    // x * y = k;
-    // so delta y = k / (xReserves + x)
-    //      */
-    // function price(uint256 xInput, uint256 xReserves, uint256 yReserves) public pure returns (uint256 yOutput) {
-    //     // fee
-    //     uint256 xInputWithFee = xInput * 997;
-    //     // Constant product formula
-    //     uint256 numerator = xInputWithFee * yReserves;
-    //     uint256 denominator = xReserves * 1000 + xInputWithFee;
+import BN from "bn.js";
+import { factor } from "./constants.js";
 
-    //     return numerator / denominator;
-    // }
-    const numerator = xIn * yReserves;
-    const denominator = xReserves + xIn;
-    return numerator / denominator;
+export function getAmountOutCPMM(xIn: BN, xReserves: BN, yReserves: BN): BN {
+    const numerator = xIn.mul(yReserves);
+    const denominator = xReserves.add(xIn);
+    return numerator.div(denominator);
 }
 
 /*
@@ -24,28 +15,33 @@ export function getAmountOutCPMM(xIn: number, xReserves: number, yReserves: numb
 
 
 export function getAmountOutCLMM(
-    L: number,
-    sqrtPriceStart: number,
-    sqrtPriceEnd: number,
+    L: BN,
+    sqrtPriceStart: BN,
+    sqrtPriceEnd: BN,
     zeroForOne: boolean
-): number {
-    let result: number;
+): BN {
+    let result: BN;
     if (zeroForOne) {
-        result = L * (sqrtPriceStart - sqrtPriceEnd);
+        result = L.mul(sqrtPriceStart.sub(sqrtPriceEnd)).div(factor);
     } else {
-        result = L * ((1 / sqrtPriceEnd - 1 / sqrtPriceStart))
+        console.log(sqrtPriceStart.toString(), sqrtPriceEnd.toString())
+        const Q = new BN(10).pow(new BN(72)); // scaling factor // todo replace with price decimals constant doubled
+        const invEnd = Q.div(sqrtPriceEnd);   // ≈ 1/sqrtPriceEnd
+        const invStart = Q.div(sqrtPriceStart);
+        console.log(invStart.toString(), invEnd.toString())
+        result = L.mul(invStart.sub(invEnd)).div(factor); // adjust for scaling
     }
-    return Math.abs(result);
+    return result;
 }
 
 
 export function crossTick(
-    L: number,
-    sqrtPriceCurrent: number,
-    sqrtPriceNextTick: number,
+    L: BN,
+    sqrtPriceCurrent: BN,
+    sqrtPriceNextTick: BN,
     zeroForOne: boolean,
-    amountIn: number
-): { amountOut: number, newSqrtPrice: number } {
+    amountIn: BN
+): { amountOut: BN, newSqrtPrice: BN } {
     // check inputs are correct, price moves in expected direction
     if (zeroForOne) {
         if (sqrtPriceCurrent <= sqrtPriceNextTick) {
@@ -56,19 +52,19 @@ export function crossTick(
             throw new Error('Invalid input');
         }
     }
-    let amountOut: number = 0;
-    let newSqrtPrice: number = 0;
+    let amountOut: BN = new BN(0);
+    let newSqrtPrice: BN = new BN(0);
     if (zeroForOne) {
-        const amountInToBoundary = L * (sqrtPriceCurrent - sqrtPriceNextTick) / (sqrtPriceCurrent * sqrtPriceNextTick);
-        if (amountIn <= amountInToBoundary) {
-            newSqrtPrice = 1 / (1 / sqrtPriceCurrent + amountIn / L);
-            amountOut = L * (sqrtPriceCurrent - newSqrtPrice);
+        const amountInToBoundary = L.mul(sqrtPriceCurrent.sub(sqrtPriceNextTick)).div(sqrtPriceCurrent.mul(sqrtPriceNextTick));
+        if (amountIn.lte(amountInToBoundary)) {
+            newSqrtPrice = new BN(1).div(new BN(1).div(sqrtPriceCurrent).add(amountIn.div(L)));
+            amountOut = L.mul(sqrtPriceCurrent.sub(newSqrtPrice));
         }
     } else {
-        const amountInToBoundary = L * (sqrtPriceNextTick - sqrtPriceCurrent);
-        if (amountIn <= amountInToBoundary) {
-            newSqrtPrice = sqrtPriceCurrent + (amountIn / L);
-            amountOut = L * ((1 / sqrtPriceCurrent) - (1 / newSqrtPrice));
+        const amountInToBoundary = L.mul(sqrtPriceNextTick.sub(sqrtPriceCurrent));
+        if (amountIn.lte(amountInToBoundary)) {
+            newSqrtPrice = sqrtPriceCurrent.add(amountIn.div(L));
+            amountOut = L.mul(new BN(1).div(sqrtPriceCurrent).sub(new BN(1).div(newSqrtPrice)));
         }
     }
     return {
