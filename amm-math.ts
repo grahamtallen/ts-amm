@@ -1,5 +1,5 @@
 import BN from "bn.js";
-import { factor } from "./constants.js";
+import { SCALE_36, SCALE_18 } from "./constants.js";
 
 export function getAmountOutCPMM(xIn: BN, xReserves: BN, yReserves: BN): BN {
     const numerator = xIn.mul(yReserves);
@@ -20,6 +20,7 @@ export function getAmountOutCLMM(
     sqrtPriceEnd: BN,
     zeroForOne: boolean
 ): BN {
+    const factor = SCALE_36;
     let result: BN;
     if (zeroForOne) {
         result = L.mul(sqrtPriceStart.sub(sqrtPriceEnd)).div(factor);
@@ -40,31 +41,37 @@ export function crossTick(
     sqrtPriceCurrent: BN,
     sqrtPriceNextTick: BN,
     zeroForOne: boolean,
-    amountIn: BN
+    amountIn: BN,
+    SCALED_ONE: BN
 ): { amountOut: BN, newSqrtPrice: BN } {
+    console.log('amountIn', amountIn.toString());
+    if (amountIn.lte(new BN(0))) {
+        throw new Error('amountIn must be positive');
+    }
     // check inputs are correct, price moves in expected direction
     if (zeroForOne) {
-        if (sqrtPriceCurrent <= sqrtPriceNextTick) {
+        if (sqrtPriceCurrent.lte(sqrtPriceNextTick)) {
             throw new Error('Invalid input');
         }
     } else {
-        if (sqrtPriceCurrent >= sqrtPriceNextTick) {
+        if (sqrtPriceCurrent.gte(sqrtPriceNextTick)) {
             throw new Error('Invalid input');
         }
     }
     let amountOut: BN = new BN(0);
     let newSqrtPrice: BN = new BN(0);
     if (zeroForOne) {
-        const amountInToBoundary = L.mul(sqrtPriceCurrent.sub(sqrtPriceNextTick)).div(sqrtPriceCurrent.mul(sqrtPriceNextTick));
+        const amountInToBoundary = L.mul(sqrtPriceCurrent.sub(sqrtPriceNextTick)).mul(SCALED_ONE).div(sqrtPriceCurrent.mul(sqrtPriceNextTick));
+        console.log('amountInToBoundary', amountInToBoundary.toString());
         if (amountIn.lte(amountInToBoundary)) {
-            newSqrtPrice = new BN(1).div(new BN(1).div(sqrtPriceCurrent).add(amountIn.div(L)));
+            newSqrtPrice = SCALED_ONE.div(SCALED_ONE.div(sqrtPriceCurrent).add(amountIn.mul(SCALED_ONE).div(L)));
             amountOut = L.mul(sqrtPriceCurrent.sub(newSqrtPrice));
         }
     } else {
         const amountInToBoundary = L.mul(sqrtPriceNextTick.sub(sqrtPriceCurrent));
         if (amountIn.lte(amountInToBoundary)) {
             newSqrtPrice = sqrtPriceCurrent.add(amountIn.div(L));
-            amountOut = L.mul(new BN(1).div(sqrtPriceCurrent).sub(new BN(1).div(newSqrtPrice)));
+            amountOut = L.mul(SCALED_ONE.div(sqrtPriceCurrent).sub(SCALED_ONE.div(newSqrtPrice)));
         }
     }
     return {

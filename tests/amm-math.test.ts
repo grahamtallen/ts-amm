@@ -1,7 +1,7 @@
 import { strict as assert } from "assert";
 import { getAmountOutCPMM, getAmountOutCLMM, crossTick } from "../amm-math.js";
 import BN from "bn.js";
-import { AMOUNT_DEC, PRICE_DEC } from "../constants.js";
+import { AMOUNT_DEC, PRICE_DEC, SCALE_36 } from "../constants.js";
 
 /**
  * ===========================
@@ -24,7 +24,7 @@ import { AMOUNT_DEC, PRICE_DEC } from "../constants.js";
  * Hint: use xReserves * yReserves = k
  */
 
-describe.skip("CPMM math", () => {
+describe("CPMM math", () => {
     it("small swap from 10X: 10,000 X reserves vs 5,000 Y reserves", () => {
         const result = getAmountOutCPMM(new BN(10), new BN(10000), new BN(5000));
         assert(result.eq(new BN(4))); // expected ~5 Y
@@ -74,7 +74,7 @@ const convertToInt = (input: number | string, decimals: number) => {
 
 
 
-describe.skip("CLMM math", () => {
+describe("CLMM math", () => {
     it("swap token0→token1 inside a tick", () => {
         let result = getAmountOutCLMM(
             convertToInt(1000, AMOUNT_DEC),
@@ -117,27 +117,42 @@ describe.skip("CLMM math", () => {
  *
  * Hint: compute max possible Δx or Δy before reaching sqrtPriceNextTick and compare with amountIn.
  */
-describe.skip("CLMM tick crossing", () => {
-    it("swapping token0→token1 hits tick boundary", () => {
-        // Calculate the amount of token0 needed to cross the tick
-        const requiredAmountIn = convertToInt(1000, AMOUNT_DEC).mul(
-            convertToInt(Math.sqrt(1.0), PRICE_DEC).sub(convertToInt(Math.sqrt(0.95), PRICE_DEC))
-        );
-        console.log({ requiredAmountIn })
+describe("CLMM tick crossing", () => {
+
+    it.only("swapping token0→token1 hits tick boundary", () => {
+        const SCALE = SCALE_36; // 1e36
+
+        // Liquidity
+        const L = convertToInt(1000, AMOUNT_DEC);
+
+        // Sqrt prices
+        const sqrtStart = convertToInt(Math.sqrt(1.0), PRICE_DEC);
+        const sqrtEnd = convertToInt(Math.sqrt(0.95), PRICE_DEC);
+
+        // Δx = L * (sqrtStart - sqrtEnd) / (sqrtStart * sqrtEnd)
+        // scale numerator first to avoid truncation
+        const requiredAmountIn = L
+            .mul(sqrtStart.sub(sqrtEnd))
+            .mul(SCALE)
+            .div(sqrtStart.mul(sqrtEnd));
+
         const result = crossTick(
-            convertToInt(1000, AMOUNT_DEC),
-            convertToInt(Math.sqrt(1.0), PRICE_DEC),
-            convertToInt(Math.sqrt(0.95), PRICE_DEC),
-            true,               // 0→1 → price goes down
-            requiredAmountIn
-        );
-        // The expected amountOut is the amount of token1 from a full tick swap
-        const expectedAmountOut = convertToInt(1000, AMOUNT_DEC).mul(
-            convertToInt(Math.sqrt(1.0), PRICE_DEC).sub(convertToInt(Math.sqrt(0.95), PRICE_DEC))
+            L,
+            sqrtStart,
+            sqrtEnd,
+            true, // 0→1 → price goes down
+            requiredAmountIn,
+            SCALE
         );
 
-        assert(result.amountOut.eq(expectedAmountOut))
-        // assert.equal(result.newSqrtPrice.toFixed(4), Math.sqrt(0.95).toFixed(4));
+        // Δy = L * (sqrtStart - sqrtEnd)
+        const expectedAmountOut = L.mul(sqrtStart.sub(sqrtEnd));
+
+        assert.equal(
+            result.amountOut.toString(),
+            expectedAmountOut.toString(),
+            `expected amount out, got ${result.amountOut.toString()} vs ${expectedAmountOut.toString()}`
+        );
     });
 
     // it("swapping token1→token0 hits tick boundary", () => {
