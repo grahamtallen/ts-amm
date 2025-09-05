@@ -1,4 +1,5 @@
 import { strict as assert } from "assert";
+import { log } from "console";
 // --- Arbitrage Tests (Uniswap-style) ---
 
 const detectArbitrage = (
@@ -7,7 +8,7 @@ const detectArbitrage = (
     EPS = 1e-12,
 ): boolean => {
     const distances: Record<string, number> = {};
-    assets.map((asset) => {
+    assets.forEach((asset) => {
         distances[asset] = 0;
     });
 
@@ -16,7 +17,11 @@ const detectArbitrage = (
         distances[v] = weight;
         return true;
     };
-    relaxEdges(edges, relaxationSteps, updateDistance, distances, EPS);
+    const edgesWithWeight = edges.map((edge) => ({
+        weight: -Math.log(edge.rate),
+        ...edge
+    }))
+    relaxEdges(edgesWithWeight, relaxationSteps, updateDistance, distances, EPS);
 
     // final check for arbitrage;
     let result = false;
@@ -24,23 +29,22 @@ const detectArbitrage = (
         result = true;
         return false;
     };
-    relaxEdges(edges, 0, foundArbitrage, distances, EPS);
+    relaxEdges(edgesWithWeight, 0, foundArbitrage, distances, EPS);
 
     return result;
 };
 
 const relaxEdges = (
-    edges: IEdge[],
+    edges: IEdgeWithWeight[],
     relaxationSteps: number,
     callback: (v: string, weight: number) => boolean,
     distances: Record<string, number>,
     EPS: number,
 ) => {
     let shouldContinue: boolean = true;
-    for (let i = 0; i <= relaxationSteps; i++) {
-        if (!shouldContinue) break;
+    for (let i = 0; i <= relaxationSteps && shouldContinue; i++) {
         for (let edge of edges) {
-            const weight = -Math.log(edge.rate);
+            const { weight } = edge;
             const u = edge.from;
             const v = edge.to;
             if (distances[v] > distances[u] + weight + EPS) {
@@ -55,6 +59,9 @@ interface IEdge {
     from: string;
     to: string;
     rate: number;
+}
+interface IEdgeWithWeight extends IEdge {
+    weight: number; // -log(rate)
 }
 describe("Arbitrage detection", () => {
     it("simple cycle", () => {
