@@ -1,5 +1,5 @@
 import { strict as assert } from "assert";
-import { getAmountOutCPMM, getAmountOutCLMM, crossTick } from "../index.js";
+import { getAmountOutCPMM, getAmountOutCLMM, crossTick } from "../amm-math.js";
 import BN from "bn.js";
 import { AMOUNT_DEC, PRICE_DEC } from "../constants.js";
 
