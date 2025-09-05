@@ -111,4 +111,5 @@ describe("Arbitrage detection", () => {
         // Product = 1.01 (>1)
         assert(detectArbitrage(edges, assets))
     })
+
 })
