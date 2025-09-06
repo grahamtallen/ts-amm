@@ -41,10 +41,6 @@ export class Median {
     }
 
     public setMedian(location: IMedianLocation): void {
-        // console.log({
-        //     prices: this.prices,
-        //     location,
-        // })
         if (!location.high) {
             this.median = location.low;
         } else {
@@ -55,28 +51,16 @@ export class Median {
     private addPriceAtIndex(newPrice: number, index: number): IMedianLocation {
         const firstHalf = this.prices.slice(0, index);
         const secondHalf = this.prices.slice(index, this.prices.length);
-        // console.log({
-        //     newPrice,
-        //     pricesLength: this.prices.length,
-        //     index,
-        //     prices: this.prices
-        // })
         if (this.prices.length - 1 < index) {
             this.prices = firstHalf.concat(secondHalf).concat(newPrice);
         } else {
             this.prices = firstHalf.concat(newPrice).concat(secondHalf);
         }
-        console.log('adPriceatindex: ', {
-            firstHalf,
-            secondHalf,
-            newPrices: this.prices
-        })
         const { length } = this.prices;
         if (length % 2 == 0) {
             // even case
             const lowIndex = length / 2 - 1;
             const highIndex = length / 2;
-            console.log({ highIndex, lowIndex })
             return {
                 low: this.prices[lowIndex],
                 high: this.prices[highIndex],
