@@ -1,5 +1,6 @@
 import { strict as assert } from 'assert';
 import { Pool, IEdge, IAdjList } from '../interfaces.js'
+import { buildAdjacneyList } from '../swap-path.js';
 
 const findBestSwapPath = (
     pools: Pool[],
@@ -11,7 +12,7 @@ const findBestSwapPath = (
 }
 
 describe("Utitlties", () => {
-    it('buildAdjacencyList', () => {
+    it.only('buildAdjacencyList', () => {
         const pools: Pool[] = [
             { tokenA: "ETH", tokenB: "USDC", rate: 2000 },
             { tokenA: "USDC", tokenB: "DAI", rate: 1.05 },
@@ -19,8 +20,8 @@ describe("Utitlties", () => {
             { tokenA: "ETH", tokenB: "WBTC", rate: 0.9 }, // direct but worse
         ];
         const result: IAdjList = buildAdjacneyList(pools);
-
-        
+        console.log({result})
+        assert.deepEqual(result, {});
     })
 })
 

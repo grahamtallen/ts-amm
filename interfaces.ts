@@ -14,8 +14,4 @@ export interface Pool {
 }
 
 
-export interface IEdge {
-    to: string // token
-    weight: number // -log(rate)
-}
-export type IAdjList =  Record<string, IEdge[]> // key is from 
+export type IAdjList =  Record<string, IEdgeWithWeight[]> // key is from 

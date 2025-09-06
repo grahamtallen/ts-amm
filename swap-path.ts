@@ -5,16 +5,41 @@ type ISeen = Record<string, boolean>;
 interface IDistance extends Pool {
     w: number; // -log(rate)
 }
-const  buildAdjacneyList = (pools: Pool[]) => {
+export const buildAdjacneyList = (pools: Pool[]): IAdjList => {
     const list: IAdjList = {};
     pools.forEach((pool) => {
-        const { tokenA, tokenB } = pool;
-        addToAdjList(pool, 'A');
-        addToAdjList(pool, 'B');
+        addToAdjList(pool, 'tokenA', list);
+        addToAdjList(pool, 'tokenB', list);
     })
+    return list;
 }
 
-const addToAdjList = (pool: Pool, token: 'A' | 'B') => {
+const addToAdjList = (pool: Pool, fromParam: 'tokenA' | 'tokenB', list: IAdjList) => {
+    const from = pool[fromParam];
+    const toParam = fromParam === 'tokenA' ? 'tokenB' : 'tokenA';
+    let weight: number;
+    if (fromParam === 'tokenA') {
+        weight = - Math.log(pool.rate);
+    } else {
+        weight =  - Math.log(1 / pool.rate);
+    }
+    if (!list[from]) {
+       list[from] = [
+         {
+            to: pool[toParam],
+            from,
+            weight,
+            rate: pool.rate
+         }
+       ] 
+    } else {
+        list[from].push({
+            to: pool[toParam],
+            rate: pool.rate,
+            weight,
+            from,
+        })
+    }
 
 }
 
