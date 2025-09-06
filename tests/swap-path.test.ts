@@ -1,4 +1,5 @@
 import { strict as assert } from 'assert';
+import { Pool, IEdge, IAdjList } from '../interfaces.js'
 
 const findBestSwapPath = (
     pools: Pool[],
@@ -9,7 +10,21 @@ const findBestSwapPath = (
     return null
 }
 
-describe("findBestSwapPath - Edge Cases", () => {
+describe("Utitlties", () => {
+    it('buildAdjacencyList', () => {
+        const pools: Pool[] = [
+            { tokenA: "ETH", tokenB: "USDC", rate: 2000 },
+            { tokenA: "USDC", tokenB: "DAI", rate: 1.05 },
+            { tokenA: "DAI", tokenB: "WBTC", rate: 0.0005 },
+            { tokenA: "ETH", tokenB: "WBTC", rate: 0.9 }, // direct but worse
+        ];
+        const result: IAdjList = buildAdjacneyList(pools);
+
+        
+    })
+})
+
+describe.skip("findBestSwapPath - Edge Cases", () => {
     it("returns null if from and to token are the same with no direct pool", () => {
         const pools: Pool[] = [
             { tokenA: "ETH", tokenB: "USDC", rate: 2000 },

@@ -10,5 +10,12 @@ export interface IEdgeWithWeight extends IEdge {
 export interface Pool {
     tokenA: string,
     tokenB: string,
-    price: number
+    rate: number
 }
+
+
+export interface IEdge {
+    to: string // token
+    weight: number // -log(rate)
+}
+export type IAdjList =  Record<string, IEdge[]> // key is from 
