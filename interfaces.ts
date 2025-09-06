@@ -6,3 +6,9 @@ export interface IEdge {
 export interface IEdgeWithWeight extends IEdge {
     weight: number; // -log(rate)
 }
+
+export interface Pool {
+    tokenA: string,
+    tokenB: string,
+    price: number
+}
