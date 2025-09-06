@@ -2,12 +2,13 @@ import { strict as assert } from 'assert';
 import { Median } from '../median.js';
 describe('median calc - interpolated percentile', () => {
 
-	it('odd # of prices', () => {
+	it.only('odd # of prices', () => {
 		const prices: number[] = [10, 30, 50, 20, 40];
 		const median = new Median();
 		prices.forEach((price) => {
 			median.addPrice(price);
 		})
+		console.log({ prices })
 		const result = median.getMedian();
 		assert.equal(result, 30);
 	})
@@ -23,14 +24,14 @@ describe('median calc - interpolated percentile', () => {
 	});
 
 	it.only("two prices", () => {
-		const prices: number[] = [10, 20];
+		const prices: number[] = [50, 40];
 		const median = new Median();
 		prices.forEach((price) => {
 			median.addPrice(price);
 		});
 		const result = median.getMedian();
 		// average of 10 and 20
-		assert.equal(result, 15);
+		assert.equal(result, 45);
 	});
 
 	it("odd # of prices", () => {
