@@ -11,7 +11,7 @@ describe("findBestSafeQuote", () => {
             { exchange: "Curve", amountOut: 1020, slippagePct: 0.1 }, // minOut = 1018.98
         ];
         const result = findBestSafeQuote(quotes);
-        assert.equal(result.exchange, "SushiSwap");
+        assert.equal(result?.exchange, "SushiSwap");
     });
 
     it("breaks ties using lower slippage percentage", () => {
@@ -20,7 +20,7 @@ describe("findBestSafeQuote", () => {
             { exchange: "B", amountOut: 1000, slippagePct: 0.5 }, // minOut = 995
         ];
         const result = findBestSafeQuote(quotes);
-        assert.equal(result.exchange, "B");
+        assert.equal(result?.exchange, "B");
     });
 });
 
@@ -28,7 +28,7 @@ describe("findBestSafeQuote - Edge Cases", () => {
     it("returns null or throws if no quotes are provided", () => {
         const quotes: Quote[] = [];
         const result = findBestSafeQuote(quotes);
-        expect(result).to.equal(null);
+        assert.equal(result, null);
     });
 
     it("handles a single quote safely", () => {
@@ -36,8 +36,8 @@ describe("findBestSafeQuote - Edge Cases", () => {
             { exchange: "Uniswap", amountOut: 1000, slippagePct: 1 },
         ];
         const result = findBestSafeQuote(quotes);
-        expect(result.exchange).to.equal("Uniswap");
-        expect(result.amountOut).to.equal(1000);
+        assert.equal(result?.exchange, "Uniswap");
+        assert.equal(result?.amountOut, 1000);
     });
 
     it("chooses the quote with lowest slippage when minOut ties", () => {
@@ -47,7 +47,7 @@ describe("findBestSafeQuote - Edge Cases", () => {
             { exchange: "DEXC", amountOut: 990, slippagePct: 0 },   // minOut = 990
         ];
         const result = findBestSafeQuote(quotes);
-        expect(result.exchange).to.equal("DEXC"); // tie at 990, lower slippage wins
+        assert.equal(result?.exchange, "DEXC"); // tie at 990, lower slippage wins
     });
 
     it("ignores quotes with 0 or negative expected output", () => {
@@ -56,7 +56,7 @@ describe("findBestSafeQuote - Edge Cases", () => {
             { exchange: "GoodDEX", amountOut: 1000, slippagePct: 1 },
         ];
         const result = findBestSafeQuote(quotes);
-        expect(result.exchange).to.equal("GoodDEX");
+        assert.equal(result?.exchange, "GoodDEX");
     });
 
     it("handles extremely high slippage gracefully", () => {
@@ -65,7 +65,7 @@ describe("findBestSafeQuote - Edge Cases", () => {
             { exchange: "SolidDEX", amountOut: 1900, slippagePct: 1 },     // minOut = 1881
         ];
         const result = findBestSafeQuote(quotes);
-        expect(result.exchange).to.equal("SolidDEX");
+        assert.equal(result?.exchange, "SolidDEX");
     });
 
     it("handles fractional slippage percentages correctly", () => {
@@ -74,7 +74,7 @@ describe("findBestSafeQuote - Edge Cases", () => {
             { exchange: "DEXB", amountOut: 1000, slippagePct: 0.01 }, // minOut = 999.9
         ];
         const result = findBestSafeQuote(quotes);
-        expect(result.exchange).to.equal("DEXB");
+        assert.equal(result?.exchange, "DEXB");
     });
 
     it("handles very large numbers without precision loss", () => {
@@ -83,7 +83,7 @@ describe("findBestSafeQuote - Edge Cases", () => {
             { exchange: "MiniDEX", amountOut: 1e12, slippagePct: 0 },     // minOut = 1e12
         ];
         const result = findBestSafeQuote(quotes);
-        expect(result.exchange).to.equal("MegaDEX");
+        assert.equal(result?.exchange, "MegaDEX");
     });
 
     it("prefers a safer low-slippage pool when expected outputs are close", () => {
@@ -92,7 +92,7 @@ describe("findBestSafeQuote - Edge Cases", () => {
             { exchange: "StableDEX", amountOut: 1000, slippagePct: 0.1 },  // minOut = 999
         ];
         const result = findBestSafeQuote(quotes);
-        expect(result.exchange).to.equal("StableDEX");
+        assert.equal(result?.exchange, "StableDEX");
     });
 
     it("correctly handles all quotes having the same slippage", () => {
@@ -102,7 +102,7 @@ describe("findBestSafeQuote - Edge Cases", () => {
             { exchange: "C", amountOut: 990, slippagePct: 1 },
         ];
         const result = findBestSafeQuote(quotes);
-        expect(result.exchange).to.equal("B");
+        assert.equal(result?.exchange, "B");
     });
 });
 
