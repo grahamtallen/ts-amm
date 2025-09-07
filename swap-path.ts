@@ -18,7 +18,7 @@ export const findBestSwapPath = (
         if (!tokenB) continue; // todo possible error case;
         const pool = poolsMap[tokenA + '/' + tokenB];
         if (pool) {
-            amountOut = amountOut + pool.rate * newAmountIn;
+            amountOut = pool.rate * newAmountIn;
             newAmountIn = amountOut;
         }
 

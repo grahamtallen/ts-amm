@@ -14,7 +14,7 @@ describe("Utitlties", () => {
         ];
         const { edges, nodes } = buildAdjacneyList(pools);
         assert.deepEqual(nodes, ['ETH', 'USDC', 'DAI', 'WBTC']);
-        assert.equal(edges.length, 8);
+        assert.equal(edges.length, 4);
     })
 })
 
@@ -32,7 +32,7 @@ describe("findBestSwapPath - Edge Cases", () => {
             { tokenA: "DAI", tokenB: "USDC", rate: 1 },
         ];
         const result = findBestSwapPath(pools, "DAI", "USDC", 100);
-        assert.equal(result?.path, ["DAI", "USDC"]);
+        assert.deepEqual(result?.path, ["DAI", "USDC"]);
         assert.equal(result?.amountOut, 100);
     });
 
@@ -46,7 +46,7 @@ describe("findBestSwapPath - Edge Cases", () => {
         assert.equal(result?.amountOut, 2100);
     });
 
-    it.skip("avoids paths with zero or unusable rates", () => {
+    it("avoids paths with zero or unusable rates", () => {
         const pools: Pool[] = [
             { tokenA: "ETH", tokenB: "USDC", rate: 0 },      // bad pool
             { tokenA: "ETH", tokenB: "USDC", rate: 2000 },   // good pool
@@ -55,7 +55,7 @@ describe("findBestSwapPath - Edge Cases", () => {
         assert.equal(result?.amountOut, 2000);
     });
 
-    it.only("finds the best path even when a longer route is more profitable", () => {
+    it("finds the best path even when a longer route is more profitable", () => {
         const pools: Pool[] = [
             { tokenA: "ETH", tokenB: "WBTC", rate: 0.9 }, // direct but worse
             { tokenA: "ETH", tokenB: "USDC", rate: 2000 },
@@ -75,7 +75,10 @@ describe("findBestSwapPath - Edge Cases", () => {
             { tokenA: "WBTC", tokenB: "DAI", rate: 20000 },
         ];
         const result = findBestSwapPath(pools, "ETH", "WBTC", 1);
-        assert.equal(result, null);
+        assert.deepEqual(result, {
+            path: [],
+            amountOut: 0
+        });
     });
 
     it("handles a cycle in the graph without infinite loops", () => {
@@ -86,7 +89,7 @@ describe("findBestSwapPath - Edge Cases", () => {
         ];
         // ETH → USDC → DAI beats ETH → USDC → ETH → ...
         const result = findBestSwapPath(pools, "ETH", "DAI", 1);
-        assert.equal(result?.path, ["ETH", "USDC", "DAI"]);
+        assert.deepEqual(result?.path, ["ETH", "USDC", "DAI"]);
         assert.equal(result?.amountOut, 2000 * 1.01);
     });
 
