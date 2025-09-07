@@ -14,4 +14,4 @@ export interface Pool {
 }
 
 
-export type IAdjList =  Record<string, IEdgeWithWeight[]> // key is from 
+export type IAdjList = IEdgeWithWeight[] // key is from 

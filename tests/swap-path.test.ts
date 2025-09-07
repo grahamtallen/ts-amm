@@ -1,15 +1,8 @@
 import { strict as assert } from 'assert';
 import { Pool, IEdge, IAdjList } from '../interfaces.js'
-import { buildAdjacneyList } from '../swap-path.js';
+import { buildAdjacneyList, findBestSwapPath } from '../swap-path.js';
 
-const findBestSwapPath = (
-    pools: Pool[],
-    from: string,
-    to: string,
-    amountIn: number
-): { path: string[]; amountOut: number } | null => {
-    return null
-}
+
 
 describe("Utitlties", () => {
     it.only('buildAdjacencyList', () => {
@@ -19,14 +12,14 @@ describe("Utitlties", () => {
             { tokenA: "DAI", tokenB: "WBTC", rate: 0.0005 },
             { tokenA: "ETH", tokenB: "WBTC", rate: 0.9 }, // direct but worse
         ];
-        const result: IAdjList = buildAdjacneyList(pools);
-        console.log({result})
-        assert.deepEqual(result, {});
+        const { edges, nodes } = buildAdjacneyList(pools);
+        assert.deepEqual(nodes, ['ETH', 'USDC', 'DAI', 'WBTC']);
+        assert.equal(edges.length, 8);
     })
 })
 
 describe.skip("findBestSwapPath - Edge Cases", () => {
-    it("returns null if from and to token are the same with no direct pool", () => {
+    it.skip("returns null if from and to token are the same with no direct pool", () => {
         const pools: Pool[] = [
             { tokenA: "ETH", tokenB: "USDC", rate: 2000 },
         ];
