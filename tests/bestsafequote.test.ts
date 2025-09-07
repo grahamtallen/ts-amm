@@ -106,3 +106,46 @@ describe("findBestSafeQuote - Edge Cases", () => {
     });
 });
 
+describe("findBestSafeQuote - breaking edge cases", () => {
+    it("fails when the second quote is better but the third is worse, due to stale highestQuoteWithSlippage", () => {
+        const quotes: Quote[] = [
+            { exchange: "A", amountOut: 1000, slippagePct: 0 }, // minOut = 1000
+            { exchange: "B", amountOut: 1100, slippagePct: 0 }, // minOut = 1100 (best)
+            { exchange: "C", amountOut: 900, slippagePct: 0 },  // minOut = 900 (worse)
+        ];
+        const result = findBestSafeQuote(quotes);
+        // ❌ Your current code may incorrectly return C
+        assert.equal(result?.exchange, "B");
+    });
+
+    it("mishandles floating point precision in tie-breaking", () => {
+        const quotes: Quote[] = [
+            { exchange: "A", amountOut: 1000, slippagePct: 0.0000001 }, // minOut ≈ 999.9999999
+            { exchange: "B", amountOut: 1000, slippagePct: 0 },         // minOut = 1000
+        ];
+        const result = findBestSafeQuote(quotes);
+        // ❌ Strict === comparison may not trigger tie-break correctly
+        assert.equal(result?.exchange, "B");
+    });
+
+    it("does not filter out a quote with zero output", () => {
+        const quotes: Quote[] = [
+            { exchange: "BadDEX", amountOut: 0, slippagePct: 1 },
+            { exchange: "GoodDEX", amountOut: 1000, slippagePct: 1 },
+        ];
+        const result = findBestSafeQuote(quotes);
+        // ❌ Your current code may return BadDEX incorrectly
+        assert.equal(result?.exchange, "GoodDEX");
+    });
+
+    it("does not filter out a quote with negative slippage", () => {
+        const quotes: Quote[] = [
+            { exchange: "WeirdDEX", amountOut: 1000, slippagePct: -5 }, // minOut = 1050 (!)
+            { exchange: "NormalDEX", amountOut: 1000, slippagePct: 1 }, // minOut = 990
+        ];
+        const result = findBestSafeQuote(quotes);
+        // ❌ Negative slippage shouldn't be allowed, but your code might pick WeirdDEX
+        assert.equal(result?.exchange, "NormalDEX");
+    });
+});
+
