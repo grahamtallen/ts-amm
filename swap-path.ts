@@ -1,5 +1,4 @@
-import { stringify } from 'querystring';
-import { Pool, IEdge, IAdjList, IEdgeWithWeight } from './interfaces.js'
+import { Pool, IAdjList, IEdgeWithWeight } from './interfaces.js'
 
 export const findBestSwapPath = (
     pools: Pool[],
@@ -8,7 +7,6 @@ export const findBestSwapPath = (
     amountIn: number
 ): { path: string[]; amountOut: number } | null => {
     const { edges, nodes, poolsMap } = buildAdjacneyList(pools);
-    console.log({ edges, nodes })
     const path = getPath(edges, nodes, from, to);
     let amountOut = 0;
     let newAmountIn = amountIn;
@@ -37,6 +35,9 @@ export const getPath = (
     destination: string,
     EPS = 1e-12,
 ): string[] => {
+    if (source === destination) {
+        return [];
+    }
     const distances: Record<string, number> = {};
     assets.forEach((asset) => {
         distances[asset] = asset === source ? 0 : Infinity;
@@ -46,7 +47,6 @@ export const getPath = (
     const { predecessors } = relaxEdges(edges, relaxationSteps, distances, EPS);
     if (distances[destination] === Infinity) return [];
 
-    console.log({ predecessors, distances });
     const path: string[] = [];
     let nextDest = destination;
     let reachedSource = false;
@@ -68,7 +68,7 @@ export const getPath = (
 };
 
 const relaxEdges = (
-    edges: IEdgeWithWeight[],
+    edges: IAdjList,
     relaxationSteps: number,
     distances: Record<string, number>,
     EPS: number,
@@ -101,7 +101,6 @@ export const buildAdjacneyList = (pools: Pool[]): { edges: IAdjList, nodes: stri
     pools.forEach((pool) => {
         const { tokenA, tokenB } = pool;
         addToAdjList(pool, 'tokenA', edges);
-        // addToAdjList(pool, 'tokenB', edges);
         if (!seen[pool.tokenA]) {
             nodes.push(pool.tokenA);
             seen[pool.tokenA] = true;
@@ -111,11 +110,6 @@ export const buildAdjacneyList = (pools: Pool[]): { edges: IAdjList, nodes: stri
             seen[pool.tokenB] = true;
         }
         poolsMap[tokenA + '/' + tokenB] = pool;
-        // const inverseRate = 1 / pool.rate;
-        // poolsMap[tokenB + '/' + tokenA] = {
-        //     ...pool,
-        //     rate: inverseRate
-        // };
 
     })
     return {
@@ -129,11 +123,7 @@ const addToAdjList = (pool: Pool, fromParam: 'tokenA' | 'tokenB', list: IAdjList
     const from = pool[fromParam];
     const toParam = fromParam === 'tokenA' ? 'tokenB' : 'tokenA';
     let weight: number;
-    // if (fromParam === 'tokenA') {
     weight = - Math.log(pool.rate);
-    // } else {
-    //     weight = Math.log(pool.rate);
-    // }
     list.push(
         {
             to: pool[toParam],
