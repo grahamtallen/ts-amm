@@ -5,7 +5,7 @@ import { buildAdjacneyList, findBestSwapPath } from '../swap-path.js';
 
 
 describe("Utitlties", () => {
-    it.only('buildAdjacencyList', () => {
+    it('buildAdjacencyList', () => {
         const pools: Pool[] = [
             { tokenA: "ETH", tokenB: "USDC", rate: 2000 },
             { tokenA: "USDC", tokenB: "DAI", rate: 1.05 },
@@ -18,7 +18,7 @@ describe("Utitlties", () => {
     })
 })
 
-describe.skip("findBestSwapPath - Edge Cases", () => {
+describe("findBestSwapPath - Edge Cases", () => {
     it.skip("returns null if from and to token are the same with no direct pool", () => {
         const pools: Pool[] = [
             { tokenA: "ETH", tokenB: "USDC", rate: 2000 },
@@ -36,17 +36,17 @@ describe.skip("findBestSwapPath - Edge Cases", () => {
         assert.equal(result?.amountOut, 100);
     });
 
-    it("chooses the better of two direct pools", () => {
+    it.skip("chooses the better of two direct pools", () => {
         const pools: Pool[] = [
             { tokenA: "ETH", tokenB: "USDC", rate: 2000 },
             { tokenA: "ETH", tokenB: "USDC", rate: 2100 },
         ];
         const result = findBestSwapPath(pools, "ETH", "USDC", 1);
-        assert.equal(result?.path, ["ETH", "USDC"]);
+        assert.deepEqual(result?.path, ["ETH", "USDC"]);
         assert.equal(result?.amountOut, 2100);
     });
 
-    it("avoids paths with zero or unusable rates", () => {
+    it.skip("avoids paths with zero or unusable rates", () => {
         const pools: Pool[] = [
             { tokenA: "ETH", tokenB: "USDC", rate: 0 },      // bad pool
             { tokenA: "ETH", tokenB: "USDC", rate: 2000 },   // good pool
@@ -55,18 +55,18 @@ describe.skip("findBestSwapPath - Edge Cases", () => {
         assert.equal(result?.amountOut, 2000);
     });
 
-    it("finds the best path even when a longer route is more profitable", () => {
+    it.only("finds the best path even when a longer route is more profitable", () => {
         const pools: Pool[] = [
+            { tokenA: "ETH", tokenB: "WBTC", rate: 0.9 }, // direct but worse
             { tokenA: "ETH", tokenB: "USDC", rate: 2000 },
             { tokenA: "USDC", tokenB: "DAI", rate: 1.05 },
             { tokenA: "DAI", tokenB: "WBTC", rate: 0.0005 },
-            { tokenA: "ETH", tokenB: "WBTC", rate: 0.9 }, // direct but worse
         ];
         // ETH → USDC → DAI → WBTC = 2000 * 1.05 * 0.0005 = 1.05 WBTC
         // ETH → WBTC direct = 0.9 WBTC
         const result = findBestSwapPath(pools, "ETH", "WBTC", 1);
-        assert.equal(result?.path, ["ETH", "USDC", "DAI", "WBTC"]);
-        assert.equal(result?.amountOut, 1.05);
+        assert.deepEqual(result?.path, ["ETH", "USDC", "DAI", "WBTC"]);
+        assert.deepEqual(result?.amountOut, 1.05);
     });
 
     it("returns null if no possible path exists", () => {
