@@ -103,4 +103,56 @@ describe("findBestSwapPath - Edge Cases", () => {
         const result = findBestSwapPath(pools, "ETH", "USDC", 10 ** 6);
         assert.equal(result?.amountOut, 2_000_000_000);
     });
+
+    it("chooses an indirect route over multiple weaker direct pools", () => {
+        const pools: Pool[] = [
+            { tokenA: "ETH", tokenB: "WBTC", rate: 0.8 },
+            { tokenA: "ETH", tokenB: "WBTC", rate: 0.85 },
+            { tokenA: "ETH", tokenB: "USDC", rate: 2000 },
+            { tokenA: "USDC", tokenB: "WBTC", rate: 0.00045 }, // 2000 * 0.00045 = 0.9
+        ];
+        const result = findBestSwapPath(pools, "ETH", "WBTC", 1);
+        assert.deepEqual(result?.path, ["ETH", "USDC", "WBTC"]);
+        assert.equal(result?.amountOut, 0.9);
+    });
+
+    it("handles multiple equally good paths", () => {
+        const pools: Pool[] = [
+            { tokenA: "ETH", tokenB: "USDC", rate: 100 },
+            { tokenA: "USDC", tokenB: "WBTC", rate: 2 },
+            { tokenA: "ETH", tokenB: "DAI", rate: 100 },
+            { tokenA: "DAI", tokenB: "WBTC", rate: 2 },
+        ];
+        const result = findBestSwapPath(pools, "ETH", "WBTC", 1);
+        assert.equal(result?.amountOut, 200);
+        assert.ok(
+            JSON.stringify(result?.path) === JSON.stringify(["ETH", "USDC", "WBTC"]) ||
+            JSON.stringify(result?.path) === JSON.stringify(["ETH", "DAI", "WBTC"])
+        );
+    });
+
+    it("distinguishes very close path profits", () => {
+        const pools: Pool[] = [
+            { tokenA: "ETH", tokenB: "USDC", rate: 2000 },
+            { tokenA: "USDC", tokenB: "WBTC", rate: 0.0004999 }, // ~0.9998
+            { tokenA: "ETH", tokenB: "WBTC", rate: 0.9997 },
+        ];
+        const result = findBestSwapPath(pools, "ETH", "WBTC", 1);
+        assert.deepEqual(result?.path, ["ETH", "USDC", "WBTC"]);
+        assert.ok(result?.amountOut > 0.9997);
+    });
+
+    it("returns the best path even if all outcomes lose value", () => {
+        const pools: Pool[] = [
+            { tokenA: "ETH", tokenB: "USDC", rate: 0.5 },
+            { tokenA: "USDC", tokenB: "WBTC", rate: 0.5 },
+        ];
+        const result = findBestSwapPath(pools, "ETH", "WBTC", 1);
+        assert.deepEqual(result?.path, ["ETH", "USDC", "WBTC"]);
+        assert.equal(result?.amountOut, 0.25);
+    });
+
+
+
+
 });

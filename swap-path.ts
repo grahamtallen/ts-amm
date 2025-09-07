@@ -6,20 +6,29 @@ export const findBestSwapPath = (
     to: string,
     amountIn: number
 ): { path: string[]; amountOut: number } | null => {
+    if (from === to) {
+        return {
+            amountOut: 0,
+            path: []
+        };
+    }
     const { edges, nodes, poolsMap } = buildAdjacneyList(pools);
     const path = getPath(edges, nodes, from, to);
-    let amountOut = 0;
-    let newAmountIn = amountIn;
-    for (let i = 0; i < path.length; i++) {
+    if (path.length === 0) {
+        return {
+            amountOut: 0,
+            path
+        };
+    }
+    let amountOut = amountIn;
+    for (let i = 0; i < path.length; i++) { // loop 1 over length of path
         const tokenA = path[i];
         const tokenB = path[i + 1];
         if (!tokenB) continue; // todo possible error case;
         const pool = poolsMap[tokenA + '/' + tokenB];
         if (pool) {
-            amountOut = pool.rate * newAmountIn;
-            newAmountIn = amountOut;
+            amountOut = pool.rate * amountOut;
         }
-
     }
 
     return {
@@ -35,9 +44,7 @@ export const getPath = (
     destination: string,
     EPS = 1e-12,
 ): string[] => {
-    if (source === destination) {
-        return [];
-    }
+
     const distances: Record<string, number> = {};
     assets.forEach((asset) => {
         distances[asset] = asset === source ? 0 : Infinity;
@@ -51,18 +58,16 @@ export const getPath = (
     let nextDest = destination;
     let reachedSource = false;
     path.push(nextDest)
-    while (!reachedSource && !!nextDest) {
+    while (!reachedSource && !!nextDest) { // loop 2 O(path distance)
         if (nextDest === source) {
             reachedSource = true;
             continue;
         }
         const nextHop = predecessors[nextDest];
-        delete predecessors[nextDest];
+        if (!nextHop) return []; // unreachable destination
         nextDest = nextHop;
         path.unshift(nextHop);
     }
-
-    // final check for arbitrage?
 
     return path;
 };
@@ -76,7 +81,8 @@ const relaxEdges = (
     predecessors: Record<string, string>,
 } => {
     const predecessors: Record<string, string> = {};
-    for (let i = 0; i < relaxationSteps; i++) {
+    for (let i = 0; i < relaxationSteps; i++) { // loop 3 O(number of assets - 1)
+        let distancesUpdated = false;
         for (let edge of edges) {
             const { weight } = edge;
             const u = edge.from;
@@ -84,8 +90,10 @@ const relaxEdges = (
             if (distances[v] > distances[u] + weight + EPS) {
                 distances[v] = weight + distances[u];
                 predecessors[v] = u;
+                distancesUpdated = true;
             }
         }
+        if (!distancesUpdated) break;
     }
     return {
         predecessors,
@@ -98,7 +106,7 @@ export const buildAdjacneyList = (pools: Pool[]): { edges: IAdjList, nodes: stri
     const poolsMap: Record<string, Pool> = {}; // key is ETH/USDC, etc
     const seen: Record<string, boolean> = {};
     const nodes: string[] = [];
-    pools.forEach((pool) => {
+    pools.forEach((pool) => { // loop 4 over number of pools
         const { tokenA, tokenB } = pool;
         addToAdjList(pool, 'tokenA', edges);
         if (!seen[pool.tokenA]) {
