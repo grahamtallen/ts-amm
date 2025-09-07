@@ -15,3 +15,8 @@ export interface Pool {
 
 
 export type IAdjList = IEdgeWithWeight[] // key is from 
+export interface Quote {
+    exchange: string;
+    amountOut: number;   // expected output
+    slippagePct: number; // e.g. 1 = 1%
+}
