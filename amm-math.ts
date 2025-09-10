@@ -28,7 +28,6 @@ export function getAmountOutCLMM(
         const Q = new BN(10).pow(new BN(72)); // scaling factor // todo replace with price decimals constant doubled
         const invEnd = Q.div(sqrtPriceEnd); // ≈ 1/sqrtPriceEnd
         const invStart = Q.div(sqrtPriceStart);
-        console.log(invStart.toString(), invEnd.toString());
         result = L.mul(invStart.sub(invEnd)).div(factor); // adjust for scaling
     }
     return result;
