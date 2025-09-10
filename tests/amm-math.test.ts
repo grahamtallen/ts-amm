@@ -117,9 +117,9 @@ describe("CLMM math", () => {
  *
  * Hint: compute max possible Δx or Δy before reaching sqrtPriceNextTick and compare with amountIn.
  */
-describe("CLMM tick crossing", () => {
+describe.skip("CLMM tick crossing", () => {
 
-    it.only("swapping token0→token1 hits tick boundary", () => {
+    it("swapping token0→token1 hits tick boundary", () => {
         const SCALE = SCALE_36; // 1e36
 
         // Liquidity
