@@ -14,8 +14,8 @@ describe("CPMM amountOut", () => {
         assert(out > 0n, 'Amount out is correct');
         // sanity: with fee>0, output < no-fee baseline
         const noFee = getAmountOutCPMM(dx, { ...pool, feeBps: 0n });
-        console.log({ noFee })
         assert(out < noFee, ' out is greater than nofee');
+        assert.equal(noFee, 999999n, 'amount is expected')
     });
     it("zero input produces zero output", () => {
         const pool: CpmmPool = { xReserves: 1_000_000n, yReserves: 1_000_000n, feeBps: 30n };

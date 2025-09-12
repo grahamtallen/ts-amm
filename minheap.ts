@@ -5,19 +5,17 @@ export class MinHeap<T> {
 
   constructor(greaterThan?: (a: T, b: T) => boolean) {
     if (!greaterThan) {
-        this.greaterThan = this.greaterThanDefault;
+      this.greaterThan = this.greaterThanDefault;
     } else {
-        this.greaterThan = greaterThan;
+      this.greaterThan = greaterThan;
     }
   }
 
-  greaterThanDefault(a: T, b: T): boolean {
-    if (!!a && !b) {
-      return true;
-    } else if (!a && !!b) {
-      return false;
-    }
-    return a > b;
+  greaterThanDefault(a: T | undefined, b: T | undefined): boolean {
+    if (a === undefined && b === undefined) return false;
+    if (a === undefined) return false;
+    if (b === undefined) return true;
+    return (a as any) > (b as any);
   }
 
   insert(value: T): void {
