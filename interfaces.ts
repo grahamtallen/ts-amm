@@ -27,3 +27,17 @@ export interface CpmmPool {
     yReserves: Amount; // token Y
     feeBps: Amount;    // e.g., 30 = 0.30%
 }
+
+export interface ICandleTick {
+    price: number;
+    quantity: number;
+    timestamp: number;
+}
+
+export interface ICandle {
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume: number;
+}
