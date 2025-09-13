@@ -95,5 +95,22 @@ describe('Candlestick aggregator', () => {
         assert.equal(bucket?.volume, 100); // 100 trades of quantity=1
     });
 
+    it('handles gaps between buckets', () => {
+        const base = 1_000_000;
+        const agg = new CandleAggregator(60000, base);
+
+        // Minute 0
+        agg.addTick({ price: 100, quantity: 1, timestamp: base + 500 });
+
+        // Minute 2 (skip minute 1 entirely)
+        agg.addTick({ price: 200, quantity: 2, timestamp: base + 121_000 });
+
+        const candles = agg.getCandles();
+        assert.equal(candles.length, 2);
+        assert.deepEqual(candles[0], { open: 100, high: 100, low: 100, close: 100, volume: 1 });
+        assert.deepEqual(candles[1], { open: 200, high: 200, low: 200, close: 200, volume: 2 });
+    });
+
+
 
 })

@@ -16,8 +16,8 @@ export class CandleAggregator {
         this.buckets[bucketIndex].addTick(tick);
     }
 
-    public getCandles = (): (ICandle | null)[] => {
-        return this.buckets.map(b => !!b ? b.getCandle() : null);
+    public getCandles = (): (ICandle)[] => {
+        return this.buckets.filter(b => !!b).map(b => b.getCandle()); // todo double loop
     }
 
     public getBucketFromTimestamp = (timestamp: number): number => {
@@ -31,7 +31,6 @@ export class CandleAggregator {
 }
 
 export class Bucket implements ICandle {
-    ticks: ICandleTick[] = [];
     open: number = 0;
     high: number = 0;
     low: number = 0;
@@ -72,7 +71,5 @@ export class Bucket implements ICandle {
             this.close = tick.price;
             this.lastCloseTimestamp = tick.timestamp;
         }
-        this.ticks.push(tick);
-
     }
 }
