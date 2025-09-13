@@ -16,12 +16,12 @@ export class CandleAggregator {
         this.buckets[bucketIndex].addTick(tick);
     }
 
-    public getCandles = (): ICandle[] => {
-        return this.buckets.map(b => b.getCandle());
+    public getCandles = (): (ICandle | null)[] => {
+        return this.buckets.map(b => !!b ? b.getCandle() : null);
     }
 
     public getBucketFromTimestamp = (timestamp: number): number => {
-        const timePassed = timestamp - this.start;
+        const timePassed = timestamp - this.start + 1;
         if (timePassed <= this.range) {
             return 0;
         } else {
@@ -38,6 +38,10 @@ export class Bucket implements ICandle {
     close: number = 0;
     volume: number = 0;
 
+    lastOpenTimestamp: number = Infinity;
+    lastCloseTimestamp: number = 0;
+
+
     public getCandle = (): ICandle => {
         return {
             high: this.high,
@@ -49,8 +53,10 @@ export class Bucket implements ICandle {
     }
 
     public addTick = (tick: ICandleTick) => {
-        if (this.ticks.length === 0) {
+        const tickIsBeforeLastOpen = this.lastOpenTimestamp > tick.timestamp;
+        if (tickIsBeforeLastOpen) {
             this.open = tick.price;
+            this.lastOpenTimestamp = tick.timestamp;
         }
         const { price, quantity } = tick;
         const { high, low, volume } = this;
@@ -62,7 +68,10 @@ export class Bucket implements ICandle {
             this.low = price;
         }
         this.volume += quantity;
-        this.close = tick.price;
+        if (tick.timestamp > this.lastCloseTimestamp) {
+            this.close = tick.price;
+            this.lastCloseTimestamp = tick.timestamp;
+        }
         this.ticks.push(tick);
 
     }

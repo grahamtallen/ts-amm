@@ -21,6 +21,17 @@ describe('Candlestick aggregator', () => {
         assert.deepEqual(agg.getCandles(), [{ open: 100, high: 110, low: 90, close: 105, volume: 10 }]);
     })
 
+    it('handles a bucket with only one tick', () => {
+        const base = 1_000_000;
+        const agg = new CandleAggregator(60000, base);
+        agg.addTick({ price: 200, quantity: 7, timestamp: base + 500 });
+
+        assert.deepEqual(agg.getCandles(), [
+            { open: 200, high: 200, low: 200, close: 200, volume: 7 }
+        ]);
+    });
+
+
     it('three buckets', () => {
         const base = 1_000_000;
         const agg = new CandleAggregator(60000, base); // 1 minute buckets
@@ -45,4 +56,44 @@ describe('Candlestick aggregator', () => {
         assert.deepEqual(bucket2, { open: 110, high: 120, low: 108, close: 115, volume: 10 });
         assert.deepEqual(bucket3, { open: 130, high: 130, low: 130, close: 130, volume: 5 });
     })
+
+    it('correctly separates ticks on bucket boundary', () => {
+        const base = 1_000_000;
+        const agg = new CandleAggregator(60000, base);
+
+        // falls in first bucket [1,000,000 → 1,059,999]
+        agg.addTick({ price: 100, quantity: 1, timestamp: base });
+
+        // falls in second bucket [1,060,000 → 1,119,999]
+        agg.addTick({ price: 200, quantity: 2, timestamp: base + 60_000 });
+
+        const [bucket1, bucket2] = agg.getCandles();
+        assert.deepEqual(bucket1, { open: 100, high: 100, low: 100, close: 100, volume: 1 });
+        assert.deepEqual(bucket2, { open: 200, high: 200, low: 200, close: 200, volume: 2 });
+    });
+
+    it('processes ticks out of order consistently', () => {
+        const base = 1_000_000;
+        const agg = new CandleAggregator(60000, base);
+
+        agg.addTick({ price: 105, quantity: 1, timestamp: base + 5000 });
+        agg.addTick({ price: 100, quantity: 2, timestamp: base + 1000 }); // earlier tick
+
+        const [bucket] = agg.getCandles();
+        assert.deepEqual(bucket, { open: 100, high: 105, low: 100, close: 105, volume: 3 });
+    });
+
+    it('sums volume correctly over many ticks', () => {
+        const base = 1_000_000;
+        const agg = new CandleAggregator(60000, base);
+
+        for (let i = 0; i < 100; i++) {
+            agg.addTick({ price: 50 + i, quantity: 1, timestamp: base + i * 500 });
+        }
+
+        const [bucket] = agg.getCandles();
+        assert.equal(bucket?.volume, 100); // 100 trades of quantity=1
+    });
+
+
 })
