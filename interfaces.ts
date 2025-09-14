@@ -41,3 +41,9 @@ export interface ICandle {
     close: number;
     volume: number;
 }
+
+export interface IVwapTrade {
+    price: number;
+    quantity: number;
+    timestamp: number;
+}
