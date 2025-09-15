@@ -63,10 +63,6 @@ class BSTVwap {
         return { sumPriceQty, sumQty };
     }
 
-    public nodeInWindow(start: number, end: number, node: Node): boolean {
-        return start <= node.minTimestamp && node.maxTimestamp <= end;
-    }
-
     public addTrade(trade: IVwapTrade, start: Node | undefined | null = this.root) {
         if (trade.quantity === 0) {
             return;
