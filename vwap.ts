@@ -26,7 +26,6 @@ class BSTVwap {
     public getVwap(start: number, end: number) {
         const summedNodes = this.getTradesInWindow(start, end);
 
-        // console.log({ summedNode })
         if (!summedNodes) return 0;
         return summedNodes.sumPriceQty / summedNodes.sumQty
     }
